@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: savior-oauth
+  cloud:
+    nacos:
+      config:
+        server-addr: 118.190.97.125:8848
+        namespace: be4e8cf7-fa50-47e9-be6c-801a13f81653
+        group: SAVIOR_GROUP
+      discovery:
+        server-addr: 118.190.97.125:8848
+        namespace: be4e8cf7-fa50-47e9-be6c-801a13f81653
+        group: SAVIOR_GROUP
