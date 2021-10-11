@@ -42,7 +42,7 @@ public class UserVO {
 
     private Date createTime;
 
-    private Set<Integer> permissionSet;
+    private Set<Long> permissionSet;
 
     public static UserVO createUserVO(UserInfoBO userInfoBO) {
         UserVO result = new UserVO();

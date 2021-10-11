@@ -1,17 +1,20 @@
 package com.jerry.savior_oauth.config;
 
+import com.jerry.savior_oauth.filters.MyPermissionEvaluator;
 import com.jerry.savior_oauth.handlers.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.access.expression.DefaultWebSecurityExpressionHandler;
 
 /**
  * @author 22454
  */
+@Slf4j
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
@@ -37,22 +40,29 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private final AccessDenyHandler accessDenyHandler;
 
     /**
+     * 权限评估器
+     */
+    private final MyPermissionEvaluator permissionEvaluator;
+
+    /**
      * 动态码鉴权配置
      */
-    private final DynamicAuthConfig dynamicAuthConfig;
+    private final AuthConfig authConfig;
 
     public SecurityConfig(AuthFailureHandler authFailureHandler,
                           AuthSuccessHandler authSuccessHandler,
                           AuthLogoutHandler authLogoutHandler,
                           MyAuthenticationEntryPoint myAuthenticationEntryPoint,
                           AccessDenyHandler accessDenyHandler,
-                          DynamicAuthConfig dynamicAuthConfig) {
+                          MyPermissionEvaluator permissionEvaluator,
+                          AuthConfig authConfig) {
         this.authFailureHandler = authFailureHandler;
         this.authSuccessHandler = authSuccessHandler;
         this.authLogoutHandler = authLogoutHandler;
         this.myAuthenticationEntryPoint = myAuthenticationEntryPoint;
         this.accessDenyHandler = accessDenyHandler;
-        this.dynamicAuthConfig = dynamicAuthConfig;
+        this.permissionEvaluator = permissionEvaluator;
+        this.authConfig = authConfig;
     }
 
     /**
@@ -66,20 +76,23 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     @Override
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.inMemoryAuthentication().withUser("admin").password("admin").authorities("/");
-    }
-
-    @Override
     protected void configure(HttpSecurity http) throws Exception {
-        // 关闭csrf
-        http.cors().and().csrf().disable();
-        // apply自定义配置规则
-        http.apply(dynamicAuthConfig);
+        log.info("配置登录规则");
         // 配置规则
-        http.authorizeRequests().and()
+        http.apply(authConfig).and()
+                .authorizeRequests()
                 // 开放登录 api
-                .formLogin().permitAll()
+                .antMatchers(
+                        "/login",
+                        "/health/**",
+                        "/doc.html",
+                        "/swagger-resources",
+                        "/webjars/**",
+                        "/code/**",
+                        "/api-docs",
+                        "/v2/**").permitAll()
+                .anyRequest().authenticated()
+                .and().formLogin()
                 // 配置登录认证成功处理器
                 .successHandler(authSuccessHandler)
                 // 配置登录认证失败处理器
@@ -94,7 +107,15 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 // 配置权限不足处理器
                 .accessDeniedHandler(accessDenyHandler)
                 // 配置认证异常处理器
-                .authenticationEntryPoint(myAuthenticationEntryPoint);
+                .authenticationEntryPoint(myAuthenticationEntryPoint)
+                .and().csrf().disable();
+    }
 
+
+    @Bean
+    public DefaultWebSecurityExpressionHandler userSecurityExpressionHandler() {
+        DefaultWebSecurityExpressionHandler handler = new DefaultWebSecurityExpressionHandler();
+        handler.setPermissionEvaluator(permissionEvaluator);
+        return handler;
     }
 }
