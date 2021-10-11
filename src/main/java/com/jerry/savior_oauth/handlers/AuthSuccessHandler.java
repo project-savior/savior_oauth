@@ -55,11 +55,13 @@ public class AuthSuccessHandler implements AuthenticationSuccessHandler {
         Long longUserId = principal.getId();
         for (Long permission : permissionSet) {
             String accessible = RedisKeyUtil.buildAccessible(longUserId, permission);
+
             redisHelper.opsForHash().hSet(
                     RedisConstants.HashBigKeyConstants.ACCESSIBLE,
                     accessible,
                     AccessibleConstants.YES);
         }
+
         LoginSuccessVO loginSuccessVO = new LoginSuccessVO();
         loginSuccessVO.setToken(token);
         CommonResponse<LoginSuccessVO> loginSuccess = CommonResponse.build(loginSuccessVO, "登录成功");

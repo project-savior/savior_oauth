@@ -1,14 +1,10 @@
 package com.jerry.savior_oauth.config;
 
-import com.jerry.redis.utils.RedisHelper;
 import com.jerry.savior_oauth.filters.DynamicAuthFilter;
 import com.jerry.savior_oauth.filters.JwtAuthFilter;
 import com.jerry.savior_oauth.filters.providers.DynamicAuthenticationProvider;
-import com.jerry.savior_oauth.filters.providers.JwtAuthenticationProvider;
 import com.jerry.savior_oauth.handlers.AuthFailureHandler;
 import com.jerry.savior_oauth.handlers.AuthSuccessHandler;
-import com.jerry.savior_oauth.openApi.user.UserOpenApi;
-import org.springframework.context.annotation.Bean;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.SecurityConfigurerAdapter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -24,16 +20,13 @@ public class AuthConfig extends SecurityConfigurerAdapter<DefaultSecurityFilterC
     private final AuthSuccessHandler authSuccessHandler;
     private final AuthFailureHandler authFailureHandler;
     private final DynamicAuthenticationProvider dynamicAuthenticationProvider;
-    private final JwtAuthenticationProvider jwtAuthenticationProvider;
 
     public AuthConfig(AuthSuccessHandler authSuccessHandler,
                       AuthFailureHandler authFailureHandler,
-                      DynamicAuthenticationProvider dynamicAuthenticationProvider,
-                      JwtAuthenticationProvider jwtAuthenticationProvider) {
+                      DynamicAuthenticationProvider dynamicAuthenticationProvider) {
         this.authSuccessHandler = authSuccessHandler;
         this.authFailureHandler = authFailureHandler;
         this.dynamicAuthenticationProvider = dynamicAuthenticationProvider;
-        this.jwtAuthenticationProvider = jwtAuthenticationProvider;
     }
 
     @Override
@@ -46,7 +39,6 @@ public class AuthConfig extends SecurityConfigurerAdapter<DefaultSecurityFilterC
 
         JwtAuthFilter jwtAuthFilter = new JwtAuthFilter(authenticationManager);
         builder.authenticationProvider(dynamicAuthenticationProvider)
-                .authenticationProvider(jwtAuthenticationProvider)
                 .addFilterBefore(dynamicAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthFilter, DynamicAuthFilter.class);
     }

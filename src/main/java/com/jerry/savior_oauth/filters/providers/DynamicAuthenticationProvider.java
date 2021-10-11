@@ -7,16 +7,21 @@ import com.jerry.savior_oauth.openApi.user.UserOpenApi;
 import com.jerry.savior_oauth.pojo.BO.UserInfoBO;
 import com.jerry.savior_oauth.pojo.VO.UserVO;
 import com.jerry.savior_oauth.utils.RedisKeyUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 /**
  * @author 22454
  */
+@Slf4j
 @Component
 public class DynamicAuthenticationProvider implements AuthenticationProvider {
     private final UserOpenApi userOpenApi;
@@ -32,6 +37,9 @@ public class DynamicAuthenticationProvider implements AuthenticationProvider {
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         DynamicAuthenticationToken dynamicAuthenticationToken = (DynamicAuthenticationToken) authentication;
+        if (dynamicAuthenticationToken.isAuthenticated()) {
+            return authentication;
+        }
         // 从 DynamicAuthFilter 过来之后
         // 检查手机号、验证码有效性
         additionalAuthenticationChecks(dynamicAuthenticationToken);
@@ -40,12 +48,12 @@ public class DynamicAuthenticationProvider implements AuthenticationProvider {
         String phone = dynamicAuthenticationToken.getPrincipal().toString();
         CommonResponse<UserInfoBO> userInfoByPhone = userOpenApi.getUserInfoByPhone(phone);
         if (!userInfoByPhone.isSuccess()) {
-            throw new BadCredentialsException(userInfoByPhone.getMessage());
+            throw new AuthenticationServiceException(userInfoByPhone.getMessage());
         }
         UserInfoBO userInfoBO = userInfoByPhone.getData();
         UserVO userVO = UserVO.createUserVO(userInfoBO);
         // 创建auth对象
-        DynamicAuthenticationToken result = new DynamicAuthenticationToken(userVO, null, userVO.getPermissionSet());
+        DynamicAuthenticationToken result = new DynamicAuthenticationToken(userVO, null, userVO.getPermissionSet(), true);
         result.setDetails(authentication.getDetails());
         return result;
     }

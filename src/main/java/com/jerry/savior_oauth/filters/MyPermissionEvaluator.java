@@ -21,12 +21,13 @@ public class MyPermissionEvaluator implements PermissionEvaluator {
             Set<Long> permissions = dynamicAuthenticationToken.getPermissions();
             return permissions.contains(permissionId);
         } catch (Exception e) {
+            e.printStackTrace();
             return false;
         }
     }
 
     @Override
-    public boolean hasPermission(Authentication authentication, Serializable serializable, String s, Object o) {
-        return false;
+    public boolean hasPermission(Authentication authentication, Serializable serializable, String targetUrl, Object permission) {
+        return this.hasPermission(authentication, targetUrl, permission);
     }
 }

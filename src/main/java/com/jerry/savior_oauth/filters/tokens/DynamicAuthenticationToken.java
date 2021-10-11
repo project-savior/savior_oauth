@@ -17,21 +17,23 @@ public class DynamicAuthenticationToken extends AbstractAuthenticationToken {
     private Set<Long> permissions;
 
 
-    public DynamicAuthenticationToken(Object principal, Object credentials) {
+    public DynamicAuthenticationToken(Object principal, Object credentials, boolean authenticated) {
         super(null);
         this.principal = principal;
         this.credentials = credentials;
-        this.setAuthenticated(false);
+        super.setAuthenticated(authenticated);
     }
 
     public DynamicAuthenticationToken(Object principal,
                                       Object credentials,
-                                      Set<Long> permissions) {
+                                      Set<Long> permissions,
+                                      boolean authenticated) {
         super(null);
         this.principal = principal;
         this.credentials = credentials;
-        this.permissions=permissions;
-       // this.setAuthenticated(true);
+        this.permissions = permissions;
+        super.setAuthenticated(authenticated);
+        // this.setAuthenticated(true);
     }
 
     @Override

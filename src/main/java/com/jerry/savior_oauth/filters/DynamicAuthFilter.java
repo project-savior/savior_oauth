@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
@@ -36,6 +37,7 @@ public class DynamicAuthFilter extends AbstractAuthenticationProcessingFilter {
     public Authentication attemptAuthentication(HttpServletRequest request,
                                                 HttpServletResponse response)
             throws AuthenticationException {
+
         log.info("登录验证");
         // 提取手机号
         String phone = obtainPhone(request);
@@ -44,17 +46,18 @@ public class DynamicAuthFilter extends AbstractAuthenticationProcessingFilter {
 
         // 手机号为空
         if (StringUtils.isBlank(phone)) {
-            throw new BadCredentialsException(EnumAuthException.MALFORMED_PHONE_NUMBER.getMessage());
+            throw new UsernameNotFoundException(EnumAuthException.MALFORMED_PHONE_NUMBER.getMessage());
         }
 
         // 验证码为空
         if (StringUtils.isBlank(dynamic)) {
-            throw new BadCredentialsException(EnumAuthException.VERIFICATION_CODE_ERROR.getMessage());
+            throw new UsernameNotFoundException(EnumAuthException.VERIFICATION_CODE_ERROR.getMessage());
         }
-        // 认证token
-        DynamicAuthenticationToken authenticationToken = new DynamicAuthenticationToken(phone, dynamic);
+        // 通过provider认证token
+        DynamicAuthenticationToken authenticationToken = new DynamicAuthenticationToken(phone, dynamic,false);
         setDetails(request, authenticationToken);
         return this.getAuthenticationManager().authenticate(authenticationToken);
+
 
     }
 
