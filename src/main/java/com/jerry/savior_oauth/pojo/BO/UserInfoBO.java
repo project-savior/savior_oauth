@@ -40,6 +40,6 @@ public class UserInfoBO {
 
     private Date createTime;
 
-    private Set<Integer> permissionSet;
+    private Set<Long> permissionSet;
 
 }

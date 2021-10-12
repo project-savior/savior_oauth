@@ -4,8 +4,8 @@ import com.jerry.savior_common.response.CommonResponse;
 import com.jerry.savior_oauth.openApi.user.fallback.UserOpenApiFallback;
 import com.jerry.savior_oauth.pojo.BO.UserInfoBO;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 /**
  * @author 22454
@@ -21,6 +21,6 @@ public interface UserOpenApi {
      * @param phone 手机号
      * @return 用户信息
      */
-    @GetMapping("/getUserInfoByPhone")
-    CommonResponse<UserInfoBO> getUserInfoByPhone(String phone);
+    @GetMapping("/info-by-phone")
+    CommonResponse<UserInfoBO> getUserInfoByPhone(@RequestParam("phone") String phone);
 }

@@ -1,11 +1,10 @@
 package com.jerry.savior_oauth.config;
 
 import com.jerry.savior_oauth.filters.DynamicAuthFilter;
+import com.jerry.savior_oauth.filters.JwtAuthFilter;
 import com.jerry.savior_oauth.filters.providers.DynamicAuthenticationProvider;
 import com.jerry.savior_oauth.handlers.AuthFailureHandler;
 import com.jerry.savior_oauth.handlers.AuthSuccessHandler;
-import com.jerry.savior_oauth.openApi.user.UserOpenApi;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.SecurityConfigurerAdapter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -17,30 +16,30 @@ import org.springframework.stereotype.Component;
  * @author 22454
  */
 @Component
-public class DynamicAuthConfig extends SecurityConfigurerAdapter<DefaultSecurityFilterChain, HttpSecurity> {
-    private final UserOpenApi userOpenApi;
+public class AuthConfig extends SecurityConfigurerAdapter<DefaultSecurityFilterChain, HttpSecurity> {
     private final AuthSuccessHandler authSuccessHandler;
     private final AuthFailureHandler authFailureHandler;
+    private final DynamicAuthenticationProvider dynamicAuthenticationProvider;
 
-    public DynamicAuthConfig(UserOpenApi userOpenApi,
-                             AuthSuccessHandler authSuccessHandler,
-                             AuthFailureHandler authFailureHandler) {
-        this.userOpenApi = userOpenApi;
+    public AuthConfig(AuthSuccessHandler authSuccessHandler,
+                      AuthFailureHandler authFailureHandler,
+                      DynamicAuthenticationProvider dynamicAuthenticationProvider) {
         this.authSuccessHandler = authSuccessHandler;
         this.authFailureHandler = authFailureHandler;
+        this.dynamicAuthenticationProvider = dynamicAuthenticationProvider;
     }
 
     @Override
-    public void configure(HttpSecurity builder) throws Exception {
+    public void configure(HttpSecurity builder) {
         DynamicAuthFilter dynamicAuthFilter = new DynamicAuthFilter();
-        dynamicAuthFilter.setAuthenticationManager(builder.getSharedObject(AuthenticationManager.class));
+        AuthenticationManager authenticationManager = builder.getSharedObject(AuthenticationManager.class);
+        dynamicAuthFilter.setAuthenticationManager(authenticationManager);
         dynamicAuthFilter.setAuthenticationSuccessHandler(authSuccessHandler);
         dynamicAuthFilter.setAuthenticationFailureHandler(authFailureHandler);
 
-        DynamicAuthenticationProvider dynamicAuthenticationProvider = new DynamicAuthenticationProvider();
-        dynamicAuthenticationProvider.setUserOpenApi(userOpenApi);
-
+        JwtAuthFilter jwtAuthFilter = new JwtAuthFilter(authenticationManager);
         builder.authenticationProvider(dynamicAuthenticationProvider)
-                .addFilterBefore(dynamicAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(dynamicAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtAuthFilter, DynamicAuthFilter.class);
     }
 }

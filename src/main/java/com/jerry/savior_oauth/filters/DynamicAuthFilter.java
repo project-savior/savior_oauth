@@ -1,22 +1,23 @@
 package com.jerry.savior_oauth.filters;
 
-import com.jerry.savior_common.error.BusinessException;
 import com.jerry.savior_oauth.error.EnumAuthException;
 import com.jerry.savior_oauth.filters.tokens.DynamicAuthenticationToken;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 
 /**
  * @author 22454
  */
+@Slf4j
 public class DynamicAuthFilter extends AbstractAuthenticationProcessingFilter {
     private static final String DEFAULT_FILTER_PROCESSES_URL = "/login/dynamic";
     private static final AntPathRequestMatcher DEFAULT_ANT_PATH_REQUEST_MATCHER = new AntPathRequestMatcher(DEFAULT_FILTER_PROCESSES_URL);
@@ -35,18 +36,28 @@ public class DynamicAuthFilter extends AbstractAuthenticationProcessingFilter {
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request,
                                                 HttpServletResponse response)
-            throws AuthenticationException, IOException, ServletException {
+            throws AuthenticationException {
+
+        log.info("登录验证");
+        // 提取手机号
         String phone = obtainPhone(request);
+        // 提取验证码
         String dynamic = obtainDynamic(request);
+
+        // 手机号为空
         if (StringUtils.isBlank(phone)) {
-            throw new BusinessException(EnumAuthException.MALFORMED_PHONE_NUMBER);
+            throw new UsernameNotFoundException(EnumAuthException.MALFORMED_PHONE_NUMBER.getMessage());
         }
+
+        // 验证码为空
         if (StringUtils.isBlank(dynamic)) {
-            throw new BusinessException(EnumAuthException.VERIFICATION_CODE_ERROR);
+            throw new UsernameNotFoundException(EnumAuthException.VERIFICATION_CODE_ERROR.getMessage());
         }
-        DynamicAuthenticationToken authenticationToken = new DynamicAuthenticationToken(phone, dynamic);
+        // 通过provider认证token
+        DynamicAuthenticationToken authenticationToken = new DynamicAuthenticationToken(phone, dynamic,false);
         setDetails(request, authenticationToken);
         return this.getAuthenticationManager().authenticate(authenticationToken);
+
 
     }
 
@@ -61,4 +72,5 @@ public class DynamicAuthFilter extends AbstractAuthenticationProcessingFilter {
     protected void setDetails(HttpServletRequest request, DynamicAuthenticationToken authRequest) {
         authRequest.setDetails(this.authenticationDetailsSource.buildDetails(request));
     }
+
 }

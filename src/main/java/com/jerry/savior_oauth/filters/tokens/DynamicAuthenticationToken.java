@@ -1,11 +1,8 @@
 package com.jerry.savior_oauth.filters.tokens;
 
-import com.jerry.savior_common.error.BusinessException;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.SpringSecurityCoreVersion;
-import org.springframework.util.Assert;
 
 import java.util.Collection;
 import java.util.Set;
@@ -17,24 +14,26 @@ public class DynamicAuthenticationToken extends AbstractAuthenticationToken {
     private static final Long serialVersionUID = SpringSecurityCoreVersion.SERIAL_VERSION_UID;
     private final Object principal;
     private Object credentials;
-    private Set<Integer> permissions;
+    private Set<Long> permissions;
 
 
-    public DynamicAuthenticationToken(Object principal, Object credentials) {
+    public DynamicAuthenticationToken(Object principal, Object credentials, boolean authenticated) {
         super(null);
         this.principal = principal;
         this.credentials = credentials;
-        this.setAuthenticated(false);
+        super.setAuthenticated(authenticated);
     }
 
     public DynamicAuthenticationToken(Object principal,
                                       Object credentials,
-                                      Set<Integer> permissions) {
+                                      Set<Long> permissions,
+                                      boolean authenticated) {
         super(null);
         this.principal = principal;
         this.credentials = credentials;
-        this.permissions=permissions;
-        this.setAuthenticated(true);
+        this.permissions = permissions;
+        super.setAuthenticated(authenticated);
+        // this.setAuthenticated(true);
     }
 
     @Override
@@ -68,7 +67,7 @@ public class DynamicAuthenticationToken extends AbstractAuthenticationToken {
         this.credentials = null;
     }
 
-    public Set<Integer> getPermissions() {
+    public Set<Long> getPermissions() {
         return permissions;
     }
 }

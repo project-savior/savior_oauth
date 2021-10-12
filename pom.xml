@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.jerry</groupId>
-        <artifactId>savior</artifactId>
+        <artifactId>savior_dependency_version_control</artifactId>
         <version>1.0-RELEASE</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
@@ -14,8 +14,16 @@
     <description>Demo project for Spring Boot</description>
     <properties>
         <java.version>1.8</java.version>
+        <savior-web.version>1.0.RELEASE</savior-web.version>
+        <savior-redis.version>1.0-RELEASE</savior-redis.version>
     </properties>
     <dependencies>
+        <!--savior web-->
+        <dependency>
+            <groupId>com.jerry</groupId>
+            <artifactId>savior_web</artifactId>
+            <version>${savior-web.version}</version>
+        </dependency>
         <!--security-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -26,6 +34,12 @@
             <groupId>org.springframework.security.oauth</groupId>
             <artifactId>spring-security-oauth2</artifactId>
             <version>2.3.5.RELEASE</version>
+        </dependency>
+        <!--redis module-->
+        <dependency>
+            <groupId>com.jerry</groupId>
+            <artifactId>savior_redis</artifactId>
+            <version>${savior-redis.version}</version>
         </dependency>
         <!--open feign-->
         <dependency>
