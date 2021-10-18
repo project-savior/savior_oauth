@@ -12,10 +12,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 /**
@@ -30,6 +28,7 @@ public class DynamicAuthenticationProvider implements AuthenticationProvider {
     public DynamicAuthenticationProvider(UserOpenApi userOpenApi,
                                          RedisHelper redisHelper) {
         this.userOpenApi = userOpenApi;
+
         this.redisHelper = redisHelper;
     }
 
@@ -65,7 +64,7 @@ public class DynamicAuthenticationProvider implements AuthenticationProvider {
         String mobile = authentication.getPrincipal().toString();
         String dynamicCode = authentication.getCredentials().toString();
         String dynamicAuthKey = RedisKeyUtil.buildDynamicAuthKey(mobile);
-        String dynamicInRedis = redisHelper.opsForString().get(dynamicAuthKey);
+        String dynamicInRedis = redisHelper.getRedisTemplate().opsForValue().get(dynamicAuthKey);
         // 如果输入的验证码为空 / redis中验证码为空 / 输入的验证码与redis中的验证码不一致
         if (StringUtils.isBlank(dynamicCode) ||
                 StringUtils.isBlank(dynamicInRedis) ||
@@ -73,7 +72,7 @@ public class DynamicAuthenticationProvider implements AuthenticationProvider {
             throw new BadCredentialsException("验证码错误");
         }
         // 验证通过，清除验证码
-        redisHelper.opsForString().del(dynamicAuthKey);
+        redisHelper.getRedisTemplate().delete(dynamicAuthKey);
     }
 
     @Override

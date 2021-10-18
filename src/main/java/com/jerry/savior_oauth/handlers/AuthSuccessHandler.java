@@ -2,7 +2,6 @@ package com.jerry.savior_oauth.handlers;
 
 import com.jerry.redis.utils.RedisHelper;
 import com.jerry.savior_common.response.CommonResponse;
-import com.jerry.savior_common.util.ObjectMapperHelper;
 import com.jerry.savior_common.util.TokenHelper;
 import com.jerry.savior_oauth.constants.AccessibleConstants;
 import com.jerry.savior_oauth.constants.RedisConstants;
@@ -12,6 +11,7 @@ import com.jerry.savior_oauth.utils.RedisKeyUtil;
 import com.jerry.savior_web.utils.JsonResponseWritingHelper;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -19,7 +19,6 @@ import org.springframework.stereotype.Component;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.time.Duration;
-import java.time.temporal.TemporalUnit;
 import java.util.Set;
 
 /**
@@ -30,7 +29,7 @@ import java.util.Set;
 @Component
 public class AuthSuccessHandler implements AuthenticationSuccessHandler {
     private final TokenHelper tokenHelper;
-    public final RedisHelper redisHelper;
+    private final RedisHelper redisHelper;
 
     public AuthSuccessHandler(TokenHelper tokenHelper,
                               RedisHelper redisHelper) {
@@ -47,7 +46,7 @@ public class AuthSuccessHandler implements AuthenticationSuccessHandler {
         String userId = String.valueOf(principal.getId());
         log.info("ID: {} 的用户认证成功", userId);
         String token = tokenHelper.buildToken(userId);
-        redisHelper.opsForString().set(
+        redisHelper.getRedisTemplate().opsForValue().set(
                 RedisKeyUtil.buildAuthTokenKey(principal.getId()),
                 token,
                 Duration.ofSeconds(tokenHelper.getTokenExpire()));
@@ -56,7 +55,7 @@ public class AuthSuccessHandler implements AuthenticationSuccessHandler {
         for (Long permission : permissionSet) {
             String accessible = RedisKeyUtil.buildAccessible(longUserId, permission);
 
-            redisHelper.opsForHash().hSet(
+            redisHelper.getRedisTemplate().opsForHash().put(
                     RedisConstants.HashBigKeyConstants.ACCESSIBLE,
                     accessible,
                     AccessibleConstants.YES);

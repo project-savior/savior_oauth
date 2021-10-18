@@ -1,12 +1,12 @@
 package com.jerry.savior_oauth.filters;
 
-import com.jerry.redis.utils.RedisHelper;
 import com.jerry.savior_common.util.TokenHelper;
 import com.jerry.savior_oauth.filters.tokens.DynamicAuthenticationToken;
 import com.jerry.savior_oauth.utils.RedisKeyUtil;
 import com.jerry.savior_web.utils.SpringContextHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,7 +24,7 @@ import java.io.IOException;
 @Slf4j
 public class JwtAuthFilter extends BasicAuthenticationFilter {
     TokenHelper tokenHelper = SpringContextHelper.getBean(TokenHelper.class);
-    RedisHelper redisHelper = SpringContextHelper.getBean(RedisHelper.class);
+    RedisTemplate redisTemplate = SpringContextHelper.getBean(RedisTemplate.class);
 
     public JwtAuthFilter(AuthenticationManager authenticationManager) {
         super(authenticationManager);
@@ -33,15 +33,15 @@ public class JwtAuthFilter extends BasicAuthenticationFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
         String token = tokenHelper.getTokenFromRequest(request);
-        if (StringUtils.isNotBlank(token)) {
+        if (StringUtils.isNotBlank(token) && !tokenHelper.hasExpired(token)) {
             String userId = tokenHelper.getSubject(token);
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if (userId != null && authentication == null) {
                 String tokenKey = RedisKeyUtil.buildAuthTokenKey(Long.valueOf(userId));
-                String tokenInRedis = redisHelper.opsForString().get(tokenKey);
+                String tokenInRedis = (String) redisTemplate.opsForValue().get(tokenKey);
                 if (tokenInRedis != null && tokenInRedis.equals(token)) {
                     log.info("token 正常，可通行");
-                    DynamicAuthenticationToken dynamicAuthenticationToken = new DynamicAuthenticationToken(userId, token,true);
+                    DynamicAuthenticationToken dynamicAuthenticationToken = new DynamicAuthenticationToken(userId, token, true);
                     onSuccessfulAuthentication(request, response, dynamicAuthenticationToken);
                 }
             }

@@ -19,7 +19,7 @@ public class VerificationServiceImpl implements IVerificationService {
     @Override
     public String sendDynamic(String phone) {
         String dynamic = "1234";
-        redisHelper.opsForString().set(RedisKeyUtil.buildDynamicAuthKey(phone), dynamic);
+        redisHelper.getRedisTemplate().opsForValue().set(RedisKeyUtil.buildDynamicAuthKey(phone), dynamic);
         return dynamic;
     }
 }

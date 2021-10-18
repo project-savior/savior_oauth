@@ -21,7 +21,8 @@ import javax.servlet.http.HttpServletResponse;
 @Slf4j
 @Component
 public class AuthLogoutHandler implements LogoutSuccessHandler {
-    public final RedisHelper redisHelper;
+
+    private final RedisHelper redisHelper;
 
     public AuthLogoutHandler(RedisHelper redisHelper) {
         this.redisHelper = redisHelper;
@@ -35,7 +36,7 @@ public class AuthLogoutHandler implements LogoutSuccessHandler {
         UserInfoBO principal = (UserInfoBO) auth.getPrincipal();
         String userId = String.valueOf(principal.getId());
         log.info("ID: {} 的用户注销成功", userId);
-        redisHelper.opsForString().del(RedisKeyUtil.buildAuthTokenKey(principal.getId()));
+        redisHelper.getRedisTemplate().delete(RedisKeyUtil.buildAuthTokenKey(principal.getId()));
         CommonResponse<Void> successResponse = CommonResponse.build(null, "注销成功");
         JsonResponseWritingHelper.writeJsonResponse(response, successResponse);
     }
